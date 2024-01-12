@@ -11,4 +11,4 @@
 - безопасность;
 - масштабируемость.
 
-![Untitled Workspace](https://github.com/yandexwork/graduate_work/assets/134307672/d81d1f9b-13e3-4a34-9a4b-30a46b83930d)
+<img width="775" alt="Снимок экрана 2024-01-12 в 22 15 42" src="https://github.com/yandexwork/graduate_work/assets/134307672/297778b6-04db-4af1-ade5-6f8db9005755">
