@@ -11,4 +11,5 @@
 - безопасность;
 - масштабируемость.
 
-<img width="775" alt="Снимок экрана 2024-01-12 в 22 15 42" src="https://github.com/yandexwork/graduate_work/assets/134307672/297778b6-04db-4af1-ade5-6f8db9005755">
+<img width="968" alt="Снимок экрана 2024-01-15 в 21 43 28" src="https://github.com/yandexwork/graduate_work/assets/134307672/430aaec7-2f12-4dfc-a2e0-2c0d5ce500a5">
+
