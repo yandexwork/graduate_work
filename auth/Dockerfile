@@ -13,5 +13,3 @@ COPY conftest.py conftest.py
 COPY ./src ./src
 
 RUN poetry install --no-root --no-dev
-
-ENTRYPOINT ["/bin/sh", "/app/start.sh"]
