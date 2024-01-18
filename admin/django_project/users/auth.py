@@ -14,7 +14,7 @@ User = get_user_model()
 class CustomBackend(BaseBackend):
 
     def authenticate(self, request, username=None, password=None):
-        login_url = settings.AUTH_API_LOGIN_URL
+        login_url = settings.AUTH_API_URL + settings.AUTH_LOGIN_PATH
         payload = {'login': username, 'password': password}
         try:
             response = requests.post(login_url, data=json.dumps(payload))
@@ -26,7 +26,7 @@ class CustomBackend(BaseBackend):
         data = response.json()
 
         access_token = data['access_token']
-        user_info_url = "https://9a2a-46-138-8-149.ngrok-free.app/api/v1/users/me"
+        user_info_url = settings.AUTH_API_URL + settings.AUTH_USER_INFO_PATH
         response = requests.get(user_info_url, cookies={'access_token': access_token})
         if response.status_code != http.HTTPStatus.OK:
             return None
