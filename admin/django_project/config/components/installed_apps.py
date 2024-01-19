@@ -5,6 +5,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'movies.apps.MoviesConfig',
-    'users.apps.UsersConfig'
+    'billing.apps.MoviesConfig',
+    'users.apps.UsersConfig',
+    'djmoney'
 ]
