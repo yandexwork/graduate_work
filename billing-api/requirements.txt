@@ -1,0 +1,8 @@
+fastapi
+pydantic
+pydantic_settings
+sqlalchemy
+orjson
+uvicorn
+sqlmodel
+asyncpg
