@@ -75,6 +75,14 @@ class ErrorMessagesUtil:
     def oauth_error():
         return f"OAuth get an error"
 
+    @staticmethod
+    def missing_header_key_error():
+        return f"Missing header key"
+
+    @staticmethod
+    def not_valid_header_key_error():
+        return f"Header key not valid"
+
 
 USER_NOT_AUTHORIZED = CustomException(
     status_code=HTTPStatus.UNAUTHORIZED,
@@ -129,4 +137,14 @@ ROLE_ALREADY_EXIST = CustomException(
 OAUTH_ERROR = CustomException(
     status_code=HTTPStatus.BAD_REQUEST,
     message=ErrorMessagesUtil.oauth_error()
+)
+
+MISSING_HEADER_KEY_ERROR = CustomException(
+    status_code=HTTPStatus.BAD_REQUEST,
+    message=ErrorMessagesUtil.missing_header_key_error()
+)
+
+NOT_VALID_HEADER_KEY_ERROR = CustomException(
+    status_code=HTTPStatus.BAD_REQUEST,
+    message=ErrorMessagesUtil.not_valid_header_key_error()
 )
