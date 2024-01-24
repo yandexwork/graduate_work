@@ -6,3 +6,4 @@ orjson
 uvicorn
 sqlmodel
 asyncpg
+alembic

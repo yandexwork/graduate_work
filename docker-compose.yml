@@ -33,7 +33,8 @@ services:
     build: ./billing-api
     container_name: billing-api
     command: >
-      sh -c "uvicorn --reload --host 0.0.0.0 --port 8001 main:app"
+      sh -c "alembic upgrade head &&
+             uvicorn --reload --host 0.0.0.0 --port 8001 main:app"
     depends_on:
       - postgres
     env_file:
