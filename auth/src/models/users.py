@@ -3,7 +3,7 @@ import random
 import string
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, String, Table, ForeignKey
+from sqlalchemy import Column, DateTime, String, Table, ForeignKey, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -33,6 +33,7 @@ class User(Base):
     last_name = Column(String(50))
     roles = relationship(Role, secondary=UserRoles, backref='users', lazy='selectin', cascade='save-update, merge, delete')
     login_history = relationship(LoginHistory, cascade='save-update, merge, delete')
+    is_subscribe = Column(Boolean(), default=False)
     refresh_tokens = relationship(RefreshTokens, cascade='save-update, merge, delete')
     created_at = Column(DateTime, default=datetime.utcnow)
 

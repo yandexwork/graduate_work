@@ -20,6 +20,8 @@ class Setting(BaseSettings):
     REFRESH_TOKEN_EXPIRE: int
     jaeger_agent_host_name: str
     jaeger_agent_port: int
+    subscribe_header_key: str
+    subscribe_header_value: str
 
 
 class AdminSettings(BaseSettings):

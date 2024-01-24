@@ -109,6 +109,17 @@ class UserService(BaseService):
         await self.db.delete(user)
         await self.db.commit()
 
+    async def change_subscribe_status(self, user_id: UUID, status: bool) -> None:
+        user = await self.get_user_by_id(user_id)
+        user.is_subscribe = status
+        await self.update_model_object(user)
+
+    async def subscribe(self, user_id: UUID) -> None:
+        await self.change_subscribe_status(user_id, True)
+
+    async def unsubscribe(self, user_id: UUID):
+        await self.change_subscribe_status(user_id, False)
+
 
 @lru_cache()
 def get_user_service(
