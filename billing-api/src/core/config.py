@@ -14,6 +14,9 @@ class PostgresSettings(BaseSettings):
 class Setting(BaseSettings):
     postgres: PostgresSettings = PostgresSettings()
     dsn: str = f'postgresql+asyncpg://{postgres.user}:{postgres.password}@{postgres.host}:{postgres.port}/{postgres.name}'
+    yookassa_token: str
+    yookassa_shopid: str
+    webhook_api_url: str
 
 
 settings = Setting()

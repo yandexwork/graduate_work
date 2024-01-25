@@ -8,7 +8,7 @@ from alembic import context
 
 from core.config import settings
 from db.postgres import Base
-from models.tariff import Tariff
+from models.tariff import TariffModel
 from models.tariff import Payment
 
 config = context.config

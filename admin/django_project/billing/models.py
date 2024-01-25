@@ -36,6 +36,7 @@ class Tariff(UUIDMixin, DatesMixin):
     name = models.CharField(_('name'), max_length=255)
     description = models.TextField(_('description'), blank=True)
     price = models.DecimalField(max_digits=6, decimal_places=2, blank=False)
+    currency = models.CharField(_('currency'), max_length=3)
     duration = models.IntegerField(_('duration'), default=1)
     is_active = models.BooleanField(_('active'), default=True)
 
