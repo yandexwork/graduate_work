@@ -173,7 +173,12 @@ class YookassaService:
                 )
                 self.session.add(new_subscription)
                 await self.session.commit()
-
+        elif notification_object.event == WebhookNotificationEventType.PAYMENT_CANCELED:
+            query = await self.session.execute(select(PaymentModel).where(PaymentModel.payment_id == payment.id))
+            payment_db = query.scalars().first()
+            if payment_db.status == PaymentStatus.PENDING:
+                await self.session.execute(update(PaymentModel).where(PaymentModel.payment_id == payment.id).values(
+                    status=PaymentStatus.CANCELED))
         else:
             # Другое событие
             pass
