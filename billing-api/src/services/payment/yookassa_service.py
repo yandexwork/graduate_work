@@ -1,6 +1,7 @@
 import datetime
 from hashlib import md5
 from http import HTTPStatus
+from uuid import UUID
 
 from fastapi import Depends
 from sqlalchemy import select, update
@@ -10,12 +11,14 @@ from yookassa.domain.exceptions.bad_request_error import BadRequestError
 from yookassa.domain.notification import WebhookNotificationEventType, WebhookNotificationFactory
 
 from core.config import settings
+from core.exceptions import AlreadySubscribedError, TariffNotFoundError
 from db.postgres import get_async_session
 from models.payment import PaymentModel, PaymentStatus
 from models.subscription import SubscriptionModel, SubscriptionStatus
 from models.tariff import TariffModel
 from schemas.tariff import PaymentSchema
 from schemas.webhook import YookassaWebhookSchema
+from schemas.payment import CreatedPaymentSchema
 
 
 class PaymentWebhookError(Exception):
@@ -25,9 +28,12 @@ class PaymentWebhookError(Exception):
 class YookassaService:
 
     def __init__(self, session: AsyncSession):
-        Configuration.configure(account_id=settings.yookassa_shopid, token=settings.yookassa_token)
+        Configuration.configure(
+            account_id=settings.yookassa_shopid,
+            secret_key=settings.yookassa_token
+        )
         self.session = session
-        self.init_webhooks()
+        # self.init_webhooks()
 
     @staticmethod
     def init_webhooks() -> None:
@@ -48,46 +54,52 @@ class YookassaService:
                 # logger
                 raise PaymentWebhookError
 
-    async def create_payment(self, user_id, tariff_id) -> HTTPStatus | str:
-        if self.is_subscribed(user_id):
-            return HTTPStatus.NOT_FOUND
-        # TODO Сценарий со сменой подписки?
-        query = await self.session.execute(select(TariffModel).where(TariffModel.id == tariff_id))
-        current_tariff = query.scalars().first()
-        if not current_tariff:
-            return HTTPStatus.NOT_FOUND
+    async def create_payment(self, user_id: UUID, tariff_id: UUID) -> str:
 
-        payment = Payment.create(
-            {
-                "amount": {
-                    "value": float(current_tariff.price),
-                    "currency": current_tariff.currency,
-                },
-                "payment_method_data": {
-                    "type": "bank_card"
-                },
-                "confirmation": {
-                    "type": "redirect",
-                    "return_url": "http://127.0.0.1"
-                },
-                "capture": True,
-                "description": f"Оплата тарифного плана {current_tariff.name}. Стоимость: {current_tariff.price}"
-                               f"{current_tariff.currency}.",
-                "save_payment_method": True
-            }
-        )
+        if await self.is_subscribed(user_id):
+            raise AlreadySubscribedError
+
+        tariff = await self.session.get(TariffModel, tariff_id)
+        if not tariff:
+            raise TariffNotFoundError
+
+        payment_payload = self.create_payment_payload(tariff)
+        payment = Payment.create(payment_payload)
+        await self.save_payment(user_id, tariff, payment)
+
+        return CreatedPaymentSchema(redirect_url=payment.confirmation.confirmation_url)
+
+    @staticmethod
+    def create_payment_payload(tariff: TariffModel) -> dict:
+        return {
+            "amount": {
+                "value": float(tariff.price),
+                "currency": tariff.currency,
+            },
+            "payment_method_data": {
+                "type": "bank_card"
+            },
+            "confirmation": {
+                "type": "redirect",
+                "return_url": settings.payment_redirect_url
+            },
+            "capture": True,
+            "description": f"Оплата тарифного плана {tariff.name}. Стоимость: {tariff.price}"
+                           f"{tariff.currency}.",
+            "save_payment_method": True
+        }
+
+    async def save_payment(self, user_id: UUID, tariff: TariffModel, payment: Payment) -> None:
         new_payment = PaymentModel(
             user_id=user_id,
-            tariff_id=current_tariff.id,
-            status=payment.status,  # pending
+            tariff_id=tariff.id,
+            status=payment.status,
             payment_method_id=payment.payment_method.id,
             payment_id=payment.id
         )
         self.session.add(new_payment)
         await self.session.commit()
 
-        # Пользователь должен перейти по ссылке, а мы ждать вебхука
-        return payment.confirmation.confirmation_url
 
     async def auto_pay(self, user_id):
         query = await self.session.execute(select(SubscriptionModel).where(
@@ -187,14 +199,14 @@ class YookassaService:
             update(
                 SubscriptionModel
             ).where(
-                (SubscriptionModel.user_id == user_id) & (SubscriptionModel.status == SubscriptionStatus.ACTIVE)
+                (SubscriptionModel.user_id == user_id) & (SubscriptionModel.status == str(SubscriptionStatus.ACTIVE))
             ).values(
                 status=SubscriptionStatus.CANCELED)
         )
 
     async def is_subscribed(self, user_id) -> bool:
         query = await self.session.execute(select(SubscriptionModel).where(
-            (SubscriptionModel.user_id == user_id) & (SubscriptionModel.status == SubscriptionStatus.ACTIVE)))
+            (SubscriptionModel.user_id == user_id) & (SubscriptionModel.status == str(SubscriptionStatus.ACTIVE))))
         subscription = query.scalars().first()
         if subscription:
             return True
