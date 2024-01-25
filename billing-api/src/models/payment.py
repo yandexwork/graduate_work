@@ -16,6 +16,7 @@ class PaymentStatus(Enum):
     def __repr__(self):
         return self.value
 
+
 class PaymentModel(Base, UUIDMixin, TimeStampedMixin):
     __tablename__ = 'payment'
 
