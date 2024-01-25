@@ -5,6 +5,7 @@ from sqlalchemy.dialects.postgresql import UUID
 
 from db.postgres import Base
 from models.mixins import TimeStampedMixin, UUIDMixin
+from models.payment import PaymentModel
 from models.tariff import TariffModel
 
 
@@ -23,4 +24,4 @@ class SubscriptionModel(Base, UUIDMixin, TimeStampedMixin):
     start_date = Column(DateTime)
     end_date = Column(DateTime)
     status = Column(String)
-    payment_method_id = Column(String)
+    payment_id = Column(UUID, ForeignKey(PaymentModel.id))

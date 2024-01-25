@@ -5,7 +5,7 @@ from http import HTTPStatus
 from fastapi import Depends
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from yookassa import Configuration, Webhook, Payment
+from yookassa import Configuration, Webhook, Payment, Refund
 from yookassa.domain.exceptions.bad_request_error import BadRequestError
 from yookassa.domain.notification import WebhookNotificationEventType, WebhookNotificationFactory
 
@@ -90,16 +90,22 @@ class YookassaService:
         return payment.confirmation.confirmation_url
 
     async def auto_pay(self, user_id):
-        if self.is_subscribed(user_id):
-            # Если уже подписан и подписка активна
-            return HTTPStatus.NOT_FOUND
         query = await self.session.execute(select(SubscriptionModel).where(
-            (SubscriptionModel.user_id == user_id) & (SubscriptionModel.status == SubscriptionStatus.CANCELED)))
+            (SubscriptionModel.user_id == user_id) & (SubscriptionModel.status == SubscriptionStatus.ACTIVE)))
         subscription = query.scalars().first()
         if not subscription:
             return HTTPStatus.NOT_FOUND
         tariff_query = await self.session.execute(select(TariffModel).where(TariffModel.id == subscription.tariff_id))
         tariff = tariff_query.scalars().first()
+
+        old_payment_query = await self.session.execute(
+            select(PaymentModel)
+            .where(PaymentModel.payment_id == subscription.payment_id)
+        )
+        old_payment = old_payment_query.scalars().first()
+
+
+        # Отправляем платеж в Yookassa
         payment = Payment.create(
             {
                 "amount": {
@@ -107,10 +113,12 @@ class YookassaService:
                     "currency": tariff.currency
                 },
                 "capture": True,
-                "payment_method_id": subscription.payment_method_id,
+                "payment_method_id": old_payment.payment_id,
                 "description": tariff.description
             }
         )
+
+        # Добавляем payment в БД
         new_payment = PaymentModel(
             user_id=user_id,
             tariff_id=tariff.id,
@@ -121,8 +129,68 @@ class YookassaService:
         self.session.add(new_payment)
         await self.session.commit()
 
-    def unsubscribe(self):
-        pass
+
+        # Получаем новый платеж из БД
+        current_payment_query = await self.session.execute(
+            select(PaymentModel)
+            .where(PaymentModel.payment_id == payment.id)
+        )
+        current_payment = current_payment_query.scalars().first()
+
+        # Обновляем в подписке поля для возможного возврата денег
+        await self.session.execute(
+            update(SubscriptionModel)
+            .where((SubscriptionModel.user_id == user_id) & (SubscriptionModel.status == SubscriptionStatus.CANCELED))
+            .values(
+                status=SubscriptionStatus.ACTIVE,
+                payment_id=current_payment.payment_id
+            )
+        )
+
+
+    async def unsubscribe(self, user_id):
+        if not self.is_subscribed(user_id):
+            # Если не подписан
+            return HTTPStatus.NOT_FOUND
+
+        # Получаем донные о подписке
+        subscription_query = await self.session.execute(
+            select(SubscriptionModel).
+            where((SubscriptionModel.user_id == user_id) & (SubscriptionModel.status == SubscriptionStatus.ACTIVE))
+        )
+        subscription = subscription_query.scalars().first()
+
+        # Надо ли возвращать деньги?
+        delta = (datetime.datetime.now() - subscription.end_date).days
+        if delta:
+            # Получить данные о тарифе для просчета стоимость возврата
+            tariff_query = await self.session.execute(
+                select(TariffModel)
+                .where(TariffModel.id == subscription.tariff_id)
+            )
+            tariff = tariff_query.scalars().first()
+            refund_amount = tariff.price / tariff.duration * delta
+            res = Refund.create({
+                "payment_id": subscription.payment_id,
+                "description": "Возврат оставшихся средств по подписке",
+                "amount": {
+                    "value": refund_amount,
+                    "currency": tariff.currency
+                }
+            })
+            if res.status == 'succeeded':
+                return HTTPStatus.OK
+            else:
+                return HTTPStatus.BAD_REQUEST
+
+        await self.session.execute(
+            update(
+                SubscriptionModel
+            ).where(
+                (SubscriptionModel.user_id == user_id) & (SubscriptionModel.status == SubscriptionStatus.ACTIVE)
+            ).values(
+                status=SubscriptionStatus.CANCELED)
+        )
 
     async def is_subscribed(self, user_id) -> bool:
         query = await self.session.execute(select(SubscriptionModel).where(
@@ -152,14 +220,20 @@ class YookassaService:
         if notification_object.event == WebhookNotificationEventType.PAYMENT_SUCCEEDED:
             query = await self.session.execute(select(PaymentModel).where(PaymentModel.payment_id == payment.id))
             payment_db = query.scalars().first()
+
             if payment_db.status == PaymentStatus.PENDING:
                 # создание платежа
-                await self.session.execute(update(PaymentModel).where(PaymentModel.payment_id == payment.id).values(
-                    status=PaymentStatus.SUCCEEDED))
+                await self.session.execute(
+                    update(PaymentModel)
+                    .where(PaymentModel.payment_id == payment.id)
+                    .values(status=PaymentStatus.SUCCEEDED)
+                )
 
                 # Данные о тарифе
                 tariff_query = await self.session.execute(
-                    select(TariffModel).where(TariffModel.id == payment_db.tariff_id))
+                    select(TariffModel)
+                    .where(TariffModel.id == payment_db.tariff_id)
+                )
                 tariff = tariff_query.scalars().first()
 
                 # Создать запись о подписке
@@ -169,10 +243,11 @@ class YookassaService:
                     start_date=datetime.datetime.now(),
                     end_date=datetime.datetime.now() + datetime.timedelta(days=tariff.duration),
                     status=SubscriptionStatus.ACTIVE,
-                    payment_method_id=payment_db.payment_method_id
+                    payment_id=payment_db.payment_id
                 )
                 self.session.add(new_subscription)
                 await self.session.commit()
+
         elif notification_object.event == WebhookNotificationEventType.PAYMENT_CANCELED:
             query = await self.session.execute(select(PaymentModel).where(PaymentModel.payment_id == payment.id))
             payment_db = query.scalars().first()
