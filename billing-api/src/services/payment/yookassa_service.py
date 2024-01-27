@@ -19,6 +19,7 @@ from models.tariff import TariffModel
 from schemas.tariff import PaymentSchema
 from schemas.webhook import YookassaWebhookSchema
 from schemas.payment import CreatedPaymentSchema
+from tasks import subscribe
 
 
 class PaymentWebhookError(Exception):
@@ -65,7 +66,8 @@ class YookassaService:
 
         payment_payload = self.create_payment_payload(tariff)
         payment = Payment.create(payment_payload)
-        await self.save_payment(user_id, tariff, payment)
+        payment_db = await self.save_payment(user_id, tariff, payment)
+        subscribe.delay(payment_db.id, payment.id, payment.status)
 
         return CreatedPaymentSchema(redirect_url=payment.confirmation.confirmation_url)
 
@@ -89,7 +91,7 @@ class YookassaService:
             "save_payment_method": True
         }
 
-    async def save_payment(self, user_id: UUID, tariff: TariffModel, payment: Payment) -> None:
+    async def save_payment(self, user_id: UUID, tariff: TariffModel, payment: Payment) -> PaymentModel:
         new_payment = PaymentModel(
             user_id=user_id,
             tariff_id=tariff.id,
@@ -99,7 +101,7 @@ class YookassaService:
         )
         self.session.add(new_payment)
         await self.session.commit()
-
+        return new_payment
 
     async def auto_pay(self, user_id):
         query = await self.session.execute(select(SubscriptionModel).where(
@@ -158,7 +160,6 @@ class YookassaService:
                 payment_id=current_payment.payment_id
             )
         )
-
 
     async def unsubscribe(self, user_id):
         if not self.is_subscribed(user_id):
