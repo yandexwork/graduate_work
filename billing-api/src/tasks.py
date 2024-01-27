@@ -1,4 +1,3 @@
-import os
 import time
 import logging
 from datetime import datetime, timedelta
@@ -6,7 +5,7 @@ from datetime import datetime, timedelta
 from celery import Celery
 from yookassa import Payment, Configuration
 
-from models.payment import PaymentModel
+from models.payment import PaymentModel, PaymentStatus
 from models.subscription import SubscriptionModel, SubscriptionStatus
 from models.tariff import TariffModel
 from db.postgres import get_sync_session
@@ -33,20 +32,22 @@ def subscribe(payment_model_id, payment_id, payment_status):
         if new_payment_data.status != payment_status:
             session = get_sync_session()
             payment = session.get(PaymentModel, payment_model_id)
-            tariff = session.get(TariffModel, payment.tariff_id)
-            subscription = SubscriptionModel(
-                user_id=payment.user_id,
-                tariff_id=payment.tariff_id,
-                start_date=datetime.now(),
-                end_date=datetime.now() + timedelta(days=tariff.duration),
-                status=repr(SubscriptionStatus.ACTIVE),
-                payment_id=payment.id
-            )
             payment.status = new_payment_data.status
             session.add(payment)
-            session.add(subscription)
+            response_text = f"Payment {payment.payment_id} changed the status. "
+            if new_payment_data.status == repr(PaymentStatus.SUCCEEDED):
+                tariff = session.get(TariffModel, payment.tariff_id)
+                subscription = SubscriptionModel(
+                    user_id=payment.user_id,
+                    tariff_id=payment.tariff_id,
+                    start_date=datetime.now(),
+                    end_date=datetime.now() + timedelta(days=tariff.duration),
+                    status=repr(SubscriptionStatus.ACTIVE),
+                    payment_id=payment.id
+                )
+                session.add(subscription)
+                response_text += f"New subscribe {subscription.id} for user {payment.user_id}."
             session.commit()
-            return (f"Payment {payment.payment_id} changed the status. "
-                    f"New subscribe {subscription.id} for user {payment.user_id}.")
+            return response_text
         tries += 1
         delay_in_seconds += delay_in_seconds
