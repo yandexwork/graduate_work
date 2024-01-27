@@ -1,0 +1,94 @@
+@startuml as_is
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!define SPRITES https://raw.githubusercontent.com/rabelenda/cicon-plantuml-sprites/v1.0/sprites
+!include SPRITES/mongodb.puml
+!include SPRITES/kafka.puml
+!include SPRITES/postgresql.puml
+!include https://gist.githubusercontent.com/likeinlife/3f34e230e0240514fa28bcc1fce1c5b1/raw/457d818dda3ed5e89b491b53cc79fca67579b8a6/gistfile1.txt
+!include SPRITES/rabbitmq.puml
+
+skinparam linetype polyline
+skinparam linetype ortho
+
+
+HIDE_STEREOTYPE()
+
+Person(user, "Customer")
+Person(admin, "Admin")
+Person(notify_admin, "Admin")
+Person(analytic, "Analytic")
+
+
+System_Boundary(analyze_system, "Analyze") {
+    Container(analyze_service, "Analyze Service", "FastApi")
+    Container(analyze_etl, "Analyze ETL", "Kafka engine")
+    ContainerDb(oltp, "OLTP", "Kafka", $sprite="kafka")
+    ContainerDb(olap, "OLAP", "Clickhouse", $sprite="clickhouse")
+}
+
+System_Boundary(content_system, "Content") {
+    Container(content_service, "Content Service", "FastApi")
+    Container(content_etl, "Content ETL", "python script")
+    ContainerDb(search_db, "Search DB", "ClickHouse", $sprite="clickhouse")
+    ContainerDb(movie_db, "Movie DB", "PostgreSQL", $sprite="postgresql")
+}
+
+System_Boundary(user_content_system, "User Content") {
+    Container(user_content_service, "User Content Service", "FastApi")
+    ContainerDb(user_db, "User Content DB", "Mongo DB", $sprite="mongodb")
+    Container(user_content_etl, "User Content ETL")
+}
+
+System_Boundary(notification_system, "Notification") {
+    Container(admin_panel, "Admin Panel")
+    Container(notify_api, "Notify API")
+    Container(notify_regular_service, "Regular sheduler service")
+    Container(notify_workers_pipeline, "Notify Workers Pipeline")
+    ContainerDb(db, "Notify DB", "PostgreSQL", $sprite="postgresql")
+
+    ContainerDb(queue, "Task queue", "RabbitMQ", $sprite="rabbitmq")
+}
+
+Container(admin_service, "Admin service", "Django")
+Container(auth_service, "Auth service", "FastApi")
+
+Rel(analyze_service, oltp, "Send")
+Rel(analyze_etl, oltp, "Collect")
+Rel(analyze_etl, olap, "Send")
+
+Rel(content_service, search_db, "Read")
+Rel(content_etl, search_db, "Send")
+Rel(content_etl, movie_db, "Collect")
+
+Rel(user_content_service, user_db, "Send/Read")
+
+Rel(user, analyze_service, "Send")
+Rel(user, content_service, "Read")
+Rel(user, user_content_service, "Send/Read")
+
+Rel(user_content_etl, user_db, "Collect")
+Rel(user_content_etl, oltp, "Send")
+
+Rel_U(analytic, olap, " ")
+
+Rel_L(admin, admin_service, " ")
+Rel_U(admin_service, movie_db, "Send/Read")
+
+Rel(auth_service, notify_api, " ")
+
+Rel(notify_admin, admin_panel, " ")
+Rel(admin_panel, db, " ")
+
+Rel(notify_api, db, " ")
+Rel(notify_api, queue, " ")
+
+Rel_L(notify_regular_service, db, " ")
+Rel(notify_regular_service, notify_api, " ")
+
+Rel(queue, notify_workers_pipeline, " ")
+Rel(notify_workers_pipeline, db, "Change status")
+Rel(notify_workers_pipeline, auth_service, "Get user")
+
+Rel_U(notify_workers_pipeline, user, "Notify")
+
+@enduml

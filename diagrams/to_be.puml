@@ -1,0 +1,77 @@
+@startuml to_be
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!define SPRITES https://raw.githubusercontent.com/rabelenda/cicon-plantuml-sprites/v1.0/sprites
+!include SPRITES/mongodb.puml
+!include SPRITES/kafka.puml
+!include SPRITES/postgresql.puml
+!include https://gist.githubusercontent.com/likeinlife/3f34e230e0240514fa28bcc1fce1c5b1/raw/457d818dda3ed5e89b491b53cc79fca67579b8a6/gistfile1.txt
+!include SPRITES/rabbitmq.puml
+
+skinparam linetype polyline
+skinparam linetype ortho
+
+
+HIDE_STEREOTYPE()
+
+Person(user, "Customer")
+Person(admin, "Admin")
+Person(notify_admin, "Notify Admin")
+Person(analytic, "Analytic")
+Person(payment_admin, "Payment System Admin")
+
+AddContainerTag("as_is", $bgColor="lightgrey")
+AddBoundaryTag("as_is", $bgColor="lightgrey")
+AddBoundaryTag("to_be", $bgColor="lightblue")
+AddContainerTag("external_system", $bgColor="lightgreen")
+
+System_Boundary(analyze_system, "Analyze", $tags="as_is")
+System_Boundary(content_system, "Movie Content", $tags="as_is")
+System_Boundary(notification_system, "Notification", $tags="as_is")
+Container(external_paymnent, "Payments service", "ЮКасса", $tags="external_system")
+System_Boundary(admin_service, "Admin service", "Django", $tags="as_is")
+System_Boundary(auth_service, "Auth service", "FastApi", $tags="as_is")
+System_Boundary(user_content_system, "User Content", $tags="as_is")
+
+System_Boundary(payment_system, "Billing Service", $tags="to_be") {
+    Container(payment_admin_panel, "Admin Panel", "Django")
+    Container(payment_api, "Payment API", "Fast API")
+    ContainerDb(payment_db, "Payment DB", "PostgreSQL", $sprite="postgresql")
+    ContainerDb(payment_queue, "Task queue", "RabbitMQ", $sprite="rabbitmq")
+
+}
+
+
+Rel_R(user, analyze_system, "Send")
+Rel_U(user, content_system, "Read")
+Rel_R(user, user_content_system, "Send/Read")
+
+Rel(user_content_system, analyze_system, "Send")
+
+Rel_L(analytic, analyze_system, " ")
+
+Rel_L(admin, admin_service, " ")
+Rel_L(admin_service, content_system, " ")
+
+Rel(auth_service, notification_system, " ")
+Rel_L(notify_admin, notification_system, " ")
+Rel(notification_system, auth_service, "Get user")
+Rel_U(notification_system, user, "Notify")
+
+Rel_U(payment_api, payment_db, " ")
+Rel_U(payment_admin, payment_admin_panel, " ")
+Rel(payment_admin_panel, payment_admin, " ")
+Rel_R(payment_admin_panel, payment_db, " ")
+Rel(payment_queue, payment_db, "Get expire subscription")
+Rel_U(payment_queue, payment_api, " ")
+Rel(payment_api, external_paymnent, " ")
+Rel(external_paymnent, payment_api, " ")
+
+Rel(payment_api, user, " ")
+Rel(user, payment_api, " ")
+Rel_U(user, external_paymnent, " ")
+Rel_R(external_paymnent, user, " ")
+
+Rel_U(payment_api, notification_system, " ")
+Rel(payment_api, auth_service, " ")
+
+@enduml
