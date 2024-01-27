@@ -40,6 +40,19 @@ services:
     env_file:
       - .env
 
+  worker:
+    build: ./billing-api
+    container_name: celery-workers
+    command: celery -A tasks.celery worker --loglevel=info
+    depends_on:
+      - billing-api
+      - redis
+    env_file:
+      - .env
+
+  redis:
+    image: redis:7
+
   nginx:
     container_name: admin-nginx
     image: nginx:1.25.3
