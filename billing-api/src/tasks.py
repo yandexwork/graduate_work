@@ -18,7 +18,7 @@ celery.conf.broker_url = settings.celery.broker_url
 celery.conf.result_backend = settings.celery.broker_url
 
 
-@celery.task(name="Check payment status")
+@celery.task(name="Check payment status & subscribe")
 def subscribe(payment_model_id, payment_id, payment_status):
     Configuration.configure(
         account_id=settings.yookassa_shopid,
