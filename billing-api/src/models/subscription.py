@@ -16,6 +16,7 @@ class SubscriptionStatus(Enum):
     def __repr__(self):
         return self.value
 
+
 class SubscriptionModel(Base, UUIDMixin, TimeStampedMixin):
     __tablename__ = "subscription"
 
