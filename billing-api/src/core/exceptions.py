@@ -13,7 +13,7 @@ class BaseErrorWithContent(BaseError):
 
 class AlreadySubscribedError(BaseErrorWithContent):
     status_code = HTTPStatus.CONFLICT
-    content = {'message': 'User already subscribed'}
+    content = {'message': 'User is already subscribed'}
 
 
 class TariffNotFoundError(BaseErrorWithContent):
