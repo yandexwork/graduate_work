@@ -161,7 +161,7 @@ class YookassaService:
             )
         )
 
-    async def unsubscribe(self, user_id):
+    async def unsubscribe(self, user_id, return_founds):
         if not self.is_subscribed(user_id):
             # Если не подписан
             return HTTPStatus.NOT_FOUND
@@ -175,7 +175,7 @@ class YookassaService:
 
         # Надо ли возвращать деньги?
         delta = (datetime.datetime.now() - subscription.end_date).days
-        if delta:
+        if delta and return_founds:
             # Получить данные о тарифе для просчета стоимость возврата
             tariff_query = await self.session.execute(
                 select(TariffModel)
@@ -196,14 +196,18 @@ class YookassaService:
             else:
                 return HTTPStatus.BAD_REQUEST
 
-        await self.session.execute(
-            update(
-                SubscriptionModel
-            ).where(
-                (SubscriptionModel.user_id == user_id) & (SubscriptionModel.status == str(SubscriptionStatus.ACTIVE))
-            ).values(
-                status=SubscriptionStatus.CANCELED)
-        )
+        try:
+            await self.session.execute(
+                update(
+                    SubscriptionModel
+                ).where(
+                    (SubscriptionModel.user_id == user_id) & (SubscriptionModel.status == str(SubscriptionStatus.ACTIVE))
+                ).values(
+                    status=SubscriptionStatus.CANCELED)
+            )
+            return HTTPStatus.OK
+        except IOError:
+            return HTTPStatus.EXPECTATION_FAILED
 
     async def is_subscribed(self, user_id) -> bool:
         query = await self.session.execute(select(SubscriptionModel).where(
