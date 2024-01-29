@@ -16,7 +16,7 @@ from db.postgres import get_async_session
 from models.payment import PaymentModel, PaymentStatus
 from models.subscription import SubscriptionModel, SubscriptionStatus
 from models.tariff import TariffModel
-from schemas.tariff import PaymentSchema
+from schemas.tariff import PaymentSchema, SubscriptionSchema
 from schemas.webhook import YookassaWebhookSchema
 from schemas.payment import CreatedPaymentSchema
 from tasks import subscribe
@@ -154,7 +154,7 @@ class YookassaService:
         # Обновляем в подписке поля для возможного возврата денег
         await self.session.execute(
             update(SubscriptionModel)
-            .where((SubscriptionModel.user_id == user_id) & (SubscriptionModel.status == SubscriptionStatus.CANCELED))
+            .where((SubscriptionModel.user_id == user_id) & (SubscriptionModel.status == str(SubscriptionStatus.CANCELED)))
             .values(
                 status=SubscriptionStatus.ACTIVE,
                 payment_id=current_payment.payment_id
@@ -162,17 +162,17 @@ class YookassaService:
         )
 
     async def unsubscribe(self, user_id, return_founds):
-        if not self.is_subscribed(user_id):
+        is_subscribed = await self.is_subscribed(user_id)
+        if not is_subscribed:
             # Если не подписан
             return HTTPStatus.NOT_FOUND
 
-        # Получаем донные о подписке
+        # Получаем данные о подписке
         subscription_query = await self.session.execute(
             select(SubscriptionModel).
-            where((SubscriptionModel.user_id == user_id) & (SubscriptionModel.status == SubscriptionStatus.ACTIVE))
+            where((SubscriptionModel.user_id == user_id) & (SubscriptionModel.status == str(SubscriptionStatus.ACTIVE)))
         )
         subscription = subscription_query.scalars().first()
-
         # Надо ли возвращать деньги?
         delta = (datetime.datetime.now() - subscription.end_date).days
         if delta and return_founds:
@@ -218,17 +218,36 @@ class YookassaService:
         return False
 
     async def get_all_payments(self, user_id) -> list[PaymentSchema]:
-        query = await self.session.execute(select(PaymentModel).where(PaymentModel.user_id == user_id))
+        query = await self.session.execute(select(PaymentModel).where(PaymentModel.user_id == UUID(user_id)))
         payments = []
         for payment in query.scalars().all():
             payments.append(
                 PaymentSchema(
                     id=payment.id,
                     user_id=payment.user_id,
-                    tariff_id=payment.tariff_id
+                    tariff_id=payment.tariff_id,
+                    status=payment.status
                 )
             )
         return payments
+
+    async def get_all_subscriptions(self, user_id) -> list[SubscriptionSchema]:
+        query = await self.session.execute(select(SubscriptionModel).where(
+            (SubscriptionModel.user_id == user_id) & (SubscriptionModel.status == str(SubscriptionStatus.ACTIVE))))
+        subscriptions = []
+        for subscription in query.scalars().all():
+            subscriptions.append(
+                SubscriptionSchema(
+                    id=subscription.id,
+                    user_id=subscription.user_id,
+                    tariff_id=subscription.tariff_id,
+                    start_date=subscription.start_date,
+                    end_date=subscription.end_date,
+                    status=subscription.status,
+                    payment_id=subscription.payment_id
+                )
+            )
+        return subscriptions
 
     async def recieve_webhook(self, webhook_data: YookassaWebhookSchema) -> HTTPStatus:
         notification_object = WebhookNotificationFactory().create(webhook_data)

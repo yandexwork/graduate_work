@@ -3,10 +3,10 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends
 
+from schemas.tariff import PaymentSchema, SubscriptionSchema
 from services.payment.yookassa_service import YookassaService, get_yookassa_service
 from services.jwt_service import get_user_id_from_jwt
-from schemas.payment import CreatePaymentSchema, CreatedPaymentSchema
-
+from schemas.payment import CreatePaymentSchema, CreatedPaymentSchema, PaymentHistorySchema
 
 router = APIRouter()
 
@@ -49,3 +49,25 @@ async def unsubscribe(
         payment_service: YookassaService = Depends(get_yookassa_service),
 ) -> int:
     return await payment_service.unsubscribe(user_id, False)
+
+
+@router.get('/history',
+            summary="История платежей",
+            response_model=list[PaymentSchema],
+            status_code=HTTPStatus.OK)
+async def history(
+        user_id: UUID = Depends(get_user_id_from_jwt),
+        payment_service: YookassaService = Depends(get_yookassa_service),
+) -> list[PaymentSchema]:
+    return await payment_service.get_all_payments(user_id)
+
+
+@router.get('/subscriptions',
+            summary="Активные подписки",
+            response_model=list[SubscriptionSchema],
+            status_code=HTTPStatus.OK)
+async def history(
+        user_id: UUID = Depends(get_user_id_from_jwt),
+        payment_service: YookassaService = Depends(get_yookassa_service),
+) -> list[SubscriptionSchema]:
+    return await payment_service.get_all_subscriptions(user_id)

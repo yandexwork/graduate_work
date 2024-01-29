@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-01-18 19:22+0000\n"
+"POT-Creation-Date: 2024-01-29 14:36+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,38 +18,42 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: billing/models.py:19
+#: billing/models.py:17
 msgid "created"
 msgstr ""
 
-#: billing/models.py:26
+#: billing/models.py:24
 msgid "modified"
 msgstr ""
 
-#: billing/models.py:38
+#: billing/models.py:41
 msgid "name"
 msgstr ""
 
-#: billing/models.py:39
+#: billing/models.py:42
 msgid "description"
 msgstr ""
 
-#: billing/models.py:40
+#: billing/models.py:43
 msgid "price"
 msgstr ""
 
-#: billing/models.py:41
+#: billing/models.py:44
+msgid "currency"
+msgstr ""
+
+#: billing/models.py:45
 msgid "duration"
 msgstr ""
 
-#: billing/models.py:42
+#: billing/models.py:46
 msgid "active"
 msgstr ""
 
-#: billing/models.py:46
+#: billing/models.py:50
 msgid "Tariff"
 msgstr ""
 
-#: billing/models.py:47
+#: billing/models.py:51
 msgid "Tariffs"
 msgstr ""
