@@ -4,7 +4,7 @@ from http import HTTPStatus
 from uuid import UUID
 
 from fastapi import Depends
-from sqlalchemy import select, update
+from sqlalchemy import select, update, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from yookassa import Configuration, Webhook, Payment, Refund
 from yookassa.domain.exceptions.bad_request_error import BadRequestError
@@ -160,6 +160,7 @@ class YookassaService:
                 payment_id=current_payment.payment_id
             )
         )
+        await self.session.commit()
 
     async def unsubscribe(self, user_id, return_founds):
         is_subscribed = await self.is_subscribed(user_id)
@@ -170,7 +171,7 @@ class YookassaService:
         # Получаем данные о подписке
         subscription_query = await self.session.execute(
             select(SubscriptionModel).
-            where((SubscriptionModel.user_id == user_id) & (SubscriptionModel.status == str(SubscriptionStatus.ACTIVE)))
+            where(SubscriptionModel.user_id == user_id, SubscriptionModel.status == str(SubscriptionStatus.ACTIVE))
         )
         subscription = subscription_query.scalars().first()
         # Надо ли возвращать деньги?
@@ -201,25 +202,28 @@ class YookassaService:
                 update(
                     SubscriptionModel
                 ).where(
-                    (SubscriptionModel.user_id == user_id) & (SubscriptionModel.status == str(SubscriptionStatus.ACTIVE))
+                    SubscriptionModel.user_id == user_id, SubscriptionModel.status == str(SubscriptionStatus.ACTIVE)
                 ).values(
-                    status=SubscriptionStatus.CANCELED)
+                    status=str(SubscriptionStatus.CANCELED))
             )
+            await self.session.commit()
             return HTTPStatus.OK
         except IOError:
             return HTTPStatus.EXPECTATION_FAILED
 
     async def is_subscribed(self, user_id) -> bool:
         query = await self.session.execute(select(SubscriptionModel).where(
-            (SubscriptionModel.user_id == user_id) & (SubscriptionModel.status == str(SubscriptionStatus.ACTIVE))))
+            SubscriptionModel.user_id == user_id, SubscriptionModel.status == str(SubscriptionStatus.ACTIVE)
+        ))
         subscription = query.scalars().first()
         if subscription:
             return True
         return False
 
     async def get_all_payments(self, user_id) -> list[PaymentSchema]:
-        query = await self.session.execute(select(PaymentModel).where((
-            PaymentModel.user_id == UUID(user_id)) & (PaymentModel.status == str(PaymentStatus.SUCCEEDED))))
+        query = await self.session.execute(select(PaymentModel).where(
+            PaymentModel.user_id == user_id
+        ))
         payments = []
         for payment in query.scalars().all():
             payments.append(
@@ -234,7 +238,7 @@ class YookassaService:
 
     async def get_all_subscriptions(self, user_id) -> list[SubscriptionSchema]:
         query = await self.session.execute(select(SubscriptionModel).where(
-            (SubscriptionModel.user_id == user_id) & (SubscriptionModel.status == str(SubscriptionStatus.ACTIVE))))
+            SubscriptionModel.user_id == user_id, SubscriptionModel.status == str(SubscriptionStatus.ACTIVE)))
         subscriptions = []
         for subscription in query.scalars().all():
             subscriptions.append(
