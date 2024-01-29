@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-01-18 19:22+0000\n"
+"POT-Creation-Date: 2024-01-29 14:36+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,38 +20,42 @@ msgstr ""
 "n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || "
 "(n%100>=11 && n%100<=14)? 2 : 3);\n"
 
-#: billing/models.py:19
+#: billing/models.py:17
 msgid "created"
 msgstr "Создано"
 
-#: billing/models.py:26
+#: billing/models.py:24
 msgid "modified"
 msgstr "Изменено"
 
-#: billing/models.py:38
+#: billing/models.py:41
 msgid "name"
 msgstr "Название"
 
-#: billing/models.py:39
+#: billing/models.py:42
 msgid "description"
 msgstr "Описание"
 
-#: billing/models.py:40
+#: billing/models.py:43
 msgid "price"
 msgstr "Цена"
 
-#: billing/models.py:41
+#: billing/models.py:44
+msgid "currency"
+msgstr "Валюта"
+
+#: billing/models.py:45
 msgid "duration"
 msgstr "Длительность тарифа"
 
-#: billing/models.py:42
+#: billing/models.py:46
 msgid "active"
 msgstr "Активный"
 
-#: billing/models.py:46
+#: billing/models.py:50
 msgid "Tariff"
 msgstr "Тариф"
 
-#: billing/models.py:47
+#: billing/models.py:51
 msgid "Tariffs"
 msgstr "Тарифы"

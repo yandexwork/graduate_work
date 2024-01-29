@@ -33,10 +33,15 @@ class DatesMixin(CreatedMixin, ModeifiedMixin):
 
 
 class Tariff(UUIDMixin, DatesMixin):
+
+    CURRENCY_CHOICES = (
+        ("RUB", "Rublеs"),
+    )
+
     name = models.CharField(_('name'), max_length=255)
     description = models.TextField(_('description'), blank=True)
-    price = models.DecimalField(max_digits=6, decimal_places=2, blank=False)
-    currency = models.CharField(_('currency'), max_length=3)
+    price = models.DecimalField(_('price'), max_digits=6, decimal_places=2, blank=False)
+    currency = models.CharField(_('currency'), max_length=3, choices=CURRENCY_CHOICES, default="RUB")
     duration = models.IntegerField(_('duration'), default=1)
     is_active = models.BooleanField(_('active'), default=True)
 

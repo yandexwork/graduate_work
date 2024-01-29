@@ -10,3 +10,6 @@ class CreatePaymentSchema(BaseModel):
 class CreatedPaymentSchema(BaseModel):
     redirect_url: str
 
+
+class PaymentHistorySchema(BaseModel):
+    history: list
