@@ -1,4 +1,5 @@
 from uuid import UUID
+import json
 
 from async_fastapi_jwt_auth import AuthJWT
 from async_fastapi_jwt_auth.exceptions import MissingTokenError, JWTDecodeError
@@ -25,7 +26,8 @@ class AuthService(BaseService):
         except (MissingTokenError, JWTDecodeError):
             raise USER_NOT_AUTHORIZED
 
-        user_id = await self.authorize.get_jwt_subject()
+        user_data = json.loads(await self.authorize.get_jwt_subject())
+        user_id = user_data["user_id"]
         if not user_id:
             raise USER_NOT_FOUND
         return user_id

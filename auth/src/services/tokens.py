@@ -1,3 +1,4 @@
+import json
 from datetime import timedelta, datetime
 from functools import lru_cache
 from uuid import UUID
@@ -54,17 +55,21 @@ class TokenService(BaseService):
 
         raise REFRESH_TOKEN_IS_INVALID
 
-    async def create_access_token(self, user_id: UUID) -> AccessToken:
+    async def create_access_token(self, user_id) -> AccessToken:
+        user = await self.db.get(User, user_id)
+        roles = [role.name for role in user.roles]
         access_token = await self.authorize.create_access_token(
-            subject=str(user_id),
+            subject=json.dumps({"user_id": str(user.id), "roles": roles, "subscription": ""}),
             expires_time=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE)
         )
         return AccessToken(access_token=access_token)
 
     async def create_tokens(self, user_id: UUID) -> Tokens:
+        user = await self.db.get(User, user_id)
+        roles = [role.name for role in user.roles]
         access_token = await self.create_access_token(user_id)
         refresh_token = await self.authorize.create_refresh_token(
-            subject=str(user_id),
+            subject=json.dumps({"user_id": str(user.id), "roles": roles, "subscription": ""}),
             expires_time=timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE)
         )
         return Tokens(
