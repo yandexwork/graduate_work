@@ -218,7 +218,8 @@ class YookassaService:
         return False
 
     async def get_all_payments(self, user_id) -> list[PaymentSchema]:
-        query = await self.session.execute(select(PaymentModel).where(PaymentModel.user_id == UUID(user_id)))
+        query = await self.session.execute(select(PaymentModel).where((
+            PaymentModel.user_id == UUID(user_id)) & (PaymentModel.status == str(PaymentStatus.SUCCEEDED))))
         payments = []
         for payment in query.scalars().all():
             payments.append(
