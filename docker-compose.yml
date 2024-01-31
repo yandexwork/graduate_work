@@ -12,7 +12,9 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
     ports:
-      - 5432:5432
+      - 5433:5433
+    networks:
+      - auth_auth_network
 
   admin_panel:
     container_name: admin-panel
@@ -28,6 +30,8 @@ services:
       - postgres
     env_file:
       - .env
+    networks:
+      - auth_auth_network
 
   billing-api:
     build: ./billing-api
@@ -39,6 +43,8 @@ services:
       - postgres
     env_file:
       - .env
+    networks:
+      - auth_auth_network
 
   worker:
     build: ./billing-api
@@ -49,9 +55,13 @@ services:
       - redis
     env_file:
       - .env
+    networks:
+      - auth_auth_network
 
   redis:
     image: redis:7
+    networks:
+      - auth_auth_network
 
   nginx:
     container_name: admin-nginx
@@ -63,6 +73,12 @@ services:
       - billing-api
     ports:
       - "81:81"
+    networks:
+      - auth_auth_network
 
 volumes:
   db:
+
+networks:
+    auth_auth_network:
+        external: true

@@ -39,3 +39,13 @@ class SubscriptionNotFoundError(BaseErrorWithContent):
 class UserDoesntHaveRightsError(BaseErrorWithContent):
     status_code = HTTPStatus.CONFLICT
     content = {'message': "User doesn't have rights"}
+
+
+class AuthServiceNoResponse(BaseErrorWithContent):
+    status_code = HTTPStatus.BAD_GATEWAY
+    content = {'message': 'Auth service doesn\'t reply'}
+
+
+class AuthServiceBadResponse(BaseErrorWithContent):
+    status_code = HTTPStatus.BAD_REQUEST
+    content = {'message': 'Subscription wasn\'t be created in auth service'}

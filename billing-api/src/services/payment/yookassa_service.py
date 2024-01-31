@@ -99,6 +99,7 @@ class YookassaService:
         self.session.add(subscription)
         await self.session.commit()
 
+
     async def save_refund(self, refund: RefundResponse) -> None:
         refund_db = RefundModel(
             payment_id=refund.payment_id,

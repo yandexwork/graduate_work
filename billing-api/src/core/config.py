@@ -17,7 +17,7 @@ def get_auth_settings() -> AuthJWTSettings:
 
 class PostgresSettings(BaseSettings):
     host: str = "postgres"
-    port: int = 5432
+    port: int = 5433
     name: str = "billing_db"
     user: str = "admin"
     password: str = "123qwe"
@@ -41,5 +41,7 @@ class Setting(BaseSettings):
     webhook_api_url: str
     payment_redirect_url: str
 
+    AUTH_API_SUBSCRIBE_URL: str = "http://localhost/api/v1/users/subscribe"
+    AUTH_API_UNSUBSCRIBE_URL: str = "https://localhost/api/v1/users/unsubscribe"
 
 settings = Setting()

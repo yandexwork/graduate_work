@@ -10,7 +10,7 @@ from models.subscription import SubscriptionModel, SubscriptionStatus
 from models.tariff import TariffModel
 from db.postgres import get_sync_session
 from core.config import settings
-
+from services.auth_service import auth_subscribe
 
 celery = Celery(__name__)
 celery.conf.broker_url = settings.celery.broker_url
@@ -48,6 +48,7 @@ def subscribe(payment_model_id, payment_id, payment_status):
                 session.add(subscription)
                 response_text += f"New subscribe {subscription.id} for user {payment.user_id}."
             session.commit()
+            auth_subscribe(payment.user_id, payment.tariff_id)
             return response_text
         tries += 1
         delay_in_seconds += delay_in_seconds
