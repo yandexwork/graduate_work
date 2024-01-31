@@ -41,5 +41,5 @@ class FullUserSchema(BaseModel):
     last_name: str
     created_at: datetime
     is_admin: bool
-    is_subscribe: bool
+    subscription: str | None
 

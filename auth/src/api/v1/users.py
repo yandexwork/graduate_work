@@ -56,10 +56,11 @@ def is_valid_key(request: Request, key_name: str, key_value: str) -> bool:
 async def subscribe(
         request: Request,
         user_id: UUID,
+        tariff_id: UUID,
         user_service: UserService = Depends(get_user_service)
 ) -> None:
     if is_valid_key(request, s.subscribe_header_key, s.subscribe_header_value):
-        return await user_service.subscribe(user_id)
+        return await user_service.subscribe(user_id, tariff_id)
     raise NOT_VALID_HEADER_KEY_ERROR
 
 

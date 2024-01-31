@@ -33,7 +33,7 @@ class User(Base):
     last_name = Column(String(50))
     roles = relationship(Role, secondary=UserRoles, backref='users', lazy='selectin', cascade='save-update, merge, delete')
     login_history = relationship(LoginHistory, cascade='save-update, merge, delete')
-    is_subscribe = Column(Boolean(), default=False)
+    subscription = Column(String(36), nullable=True)
     refresh_tokens = relationship(RefreshTokens, cascade='save-update, merge, delete')
     created_at = Column(DateTime, default=datetime.utcnow)
 

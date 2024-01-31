@@ -109,16 +109,16 @@ class UserService(BaseService):
         await self.db.delete(user)
         await self.db.commit()
 
-    async def change_subscribe_status(self, user_id: UUID, status: bool) -> None:
+    async def change_subscribe_status(self, user_id: UUID, tariff_id: UUID | None) -> None:
         user = await self.get_user_by_id(user_id)
-        user.is_subscribe = status
+        user.subscription = str(tariff_id)
         await self.update_model_object(user)
 
-    async def subscribe(self, user_id: UUID) -> None:
-        await self.change_subscribe_status(user_id, True)
+    async def subscribe(self, user_id: UUID, tariff_id: UUID) -> None:
+        await self.change_subscribe_status(user_id, tariff_id)
 
     async def unsubscribe(self, user_id: UUID):
-        await self.change_subscribe_status(user_id, False)
+        await self.change_subscribe_status(user_id, None)
 
 
 @lru_cache()
