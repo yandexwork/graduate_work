@@ -1,0 +1,69 @@
+@startuml billing_service_pipeline
+skinparam WrapWidth 5
+autonumber
+
+actor customer as "Customer"
+
+participant admin_panel as "Admin Panel"
+participant api as "Billing API"
+database billing_db as "Billing DB"
+database billing_queue as "Billing Task\nQueue"
+participant payment_system as "ЮКасса" #LightGreen
+participant auth_service #LightBlue
+participant notify_service #LightBlue
+
+alt make subscription
+    activate api
+    customer -> api: Subscription request
+    api -> payment_system: Payment request
+    payment_system -> api: Payment object
+    api -> billing_db: create Payment
+    billing_db -> api: ok
+    api -> customer: sent payment link
+    deactivate api
+
+
+    customer -> payment_system: Make transaction
+
+    activate api
+    api--> payment_system: is payed?
+    payment_system --> api: successful
+    api -> billing_db
+    billing_db -> api
+    api -> auth_service: Change user type
+    deactivate api
+    auth_service -> customer: new token
+
+    api -> notify_service: add to queue noty
+    notify_service -> api: ok
+end
+
+alt cancel subscription
+    activate api
+    customer -> api: Cancel subscription request
+    api -> payment_system: Cancel payment request
+    payment_system -> api: cancellation response
+    api -> billing_db: update payment
+    billing_db -> api: ok
+    api -> auth_service: Change user type
+    deactivate api
+    auth_service -> customer: new token
+    api -> notify_service: add to queue noty
+    notify_service -> api: ok
+end
+
+alt broker
+    billing_queue -> billing_db: find expired subscriptions
+    billing_db -> billing_queue: [list of subscriptions]
+
+    alt deactivate subscriptions queue
+        billing_queue -> api: change status
+        api -> billing_db: update payment status
+        billing_db -> api: ok
+        api -> auth_service: change user status
+        auth_service -> api: ok
+        api -> notify_service: add to queue noty
+        notify_service -> api: ok
+    end
+end
+@enduml
