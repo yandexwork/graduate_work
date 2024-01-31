@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from db.postgres import get_async_session
-from models.tariff import Tariff
+from models.tariff import TariffModel
 from schemas.tariff import TariffSchema
 
 
@@ -13,7 +13,7 @@ class TariffService:
         self.session = session
 
     async def get_active_tariffs(self) -> list[TariffSchema]:
-        query = await self.session.execute(select(Tariff).where(Tariff.is_active == True))
+        query = await self.session.execute(select(TariffModel).where(TariffModel.is_active == True))
         tariffs = []
         for tariff in query.scalars().all():
             tariffs.append(

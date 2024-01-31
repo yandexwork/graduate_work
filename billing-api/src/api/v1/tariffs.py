@@ -10,7 +10,7 @@ router = APIRouter()
 
 
 @router.get(
-    "/",
+    "/tariffs",
     summary="Получение активных тарифов",
     response_description="Активные тарифы",
     response_model=list[TariffSchema],

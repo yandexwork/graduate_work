@@ -1,14 +1,14 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import ORJSONResponse
-from sqlalchemy import Table, MetaData
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from core.config import settings
+from core.exceptions import BaseErrorWithContent
 from db import postgres
-from models import tariff
 from api.v1 import tariffs
+from api.v1 import subscription
 from api import healthcheck
 
 
@@ -22,12 +22,21 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title='BillingService',
-    docs_url='/api/openapi',
-    openapi_url='/api/openapi.json',
+    docs_url='/billing-api/openapi',
+    openapi_url='/billing-api/openapi.json',
     default_response_class=ORJSONResponse,
     lifespan=lifespan
 )
 
 
-app.include_router(healthcheck.router, prefix="/api/v1")
-app.include_router(tariffs.router, prefix="/api/v1/tariffs", tags=['tariff'])
+@app.exception_handler(BaseErrorWithContent)
+async def project_error_handler(request: Request, exc: BaseErrorWithContent):
+    return ORJSONResponse(
+        status_code=exc.status_code,
+        content=exc.content,
+    )
+
+
+app.include_router(healthcheck.router, prefix="/billing-api/v1")
+app.include_router(tariffs.router, prefix="/billing-api/v1", tags=['tariffs'])
+app.include_router(subscription.router, prefix="/billing-api/v1", tags=['subscription'])

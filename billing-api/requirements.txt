@@ -1,9 +1,14 @@
 fastapi
-pydantic
-pydantic_settings
+pydantic==2.1.1
+pydantic_settings==2.0.2
 sqlalchemy
 orjson
 uvicorn
 sqlmodel
 asyncpg
 alembic
+yookassa
+async-fastapi-jwt-auth==0.6.1
+celery
+redis
+psycopg2
