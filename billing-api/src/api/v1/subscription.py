@@ -1,7 +1,7 @@
 from http import HTTPStatus
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 
 from schemas.tariff import PaymentSchema, SubscriptionSchema
 from services.payment.yookassa_service import YookassaService, get_yookassa_service
@@ -27,18 +27,20 @@ async def subscribe(
 @router.post('/cancellation',
              summary="Отписка с возвратом",
              status_code=HTTPStatus.OK)
-async def unsubscribe(
+async def cancellation(
         user_id: UUID,
         admin_id: UUID = Depends(get_user_id_from_jwt),
         payment_service: YookassaService = Depends(get_yookassa_service),
-        return_found: bool = False,
-) -> int:
+        return_fund: bool = False,
+) -> Response:
     # todo добавить в токен роль чтобы разграничивать поведение
     # if not admin_id.get('is_admin'):
     #     return HTTPStatus.FORBIDDEN
     # else:
     #     return await payment_service.unsubscribe(user_id, return_found)
-    return await payment_service.unsubscribe(user_id, return_found)
+    await payment_service.unsubscribe(user_id, return_fund)
+    return Response(content='success')
+
 
 
 @router.post('/unsubscribe',
@@ -47,8 +49,11 @@ async def unsubscribe(
 async def unsubscribe(
         user_id: UUID = Depends(get_user_id_from_jwt),
         payment_service: YookassaService = Depends(get_yookassa_service),
-) -> int:
-    return await payment_service.unsubscribe(user_id, False)
+) -> Response:
+    return_fund = False
+    await payment_service.unsubscribe(user_id, return_fund)
+    return Response(content='success')
+
 
 
 @router.get('/history',
