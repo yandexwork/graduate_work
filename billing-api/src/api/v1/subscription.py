@@ -52,7 +52,6 @@ async def unsubscribe(
 ) -> Response:
     return_fund = False
     await payment_service.unsubscribe(user_data.user_id, return_fund)
-    return Response(content='success')
 
 
 

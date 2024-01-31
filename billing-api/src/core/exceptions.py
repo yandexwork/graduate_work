@@ -39,5 +39,3 @@ class SubscriptionNotFoundError(BaseErrorWithContent):
 class UserDoesntHaveRightsError(BaseErrorWithContent):
     status_code = HTTPStatus.CONFLICT
     content = {'message': "User doesn't have rights"}
-
-
