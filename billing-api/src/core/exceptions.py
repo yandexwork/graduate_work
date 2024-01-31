@@ -26,3 +26,13 @@ class UserUnauthorizedError(BaseErrorWithContent):
     content = {'message': 'User is unauthorized'}
 
 
+class RefundError(BaseErrorWithContent):
+    status_code = HTTPStatus.BAD_REQUEST
+    content = {'message': 'Refund was not created'}
+
+
+class SubscriptionNotFoundError(BaseErrorWithContent):
+    status_code = HTTPStatus.NOT_FOUND
+    content = {'message': "User doesn't have subscription"}
+
+
