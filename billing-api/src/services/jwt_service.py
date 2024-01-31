@@ -21,7 +21,6 @@ class JWTService:
             raise UserUnauthorizedError
 
         user_data = json.loads(await self.authorize.get_jwt_subject())
-        print(user_data)
         return UserSchema(**user_data)
 
 

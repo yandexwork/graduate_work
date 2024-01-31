@@ -1,12 +1,15 @@
-from http import HTTPStatus
 from uuid import UUID
+from http import HTTPStatus
 
 from fastapi import APIRouter, Depends, Response
 
 from schemas.tariff import PaymentSchema, SubscriptionSchema
 from services.payment.yookassa_service import YookassaService, get_yookassa_service
-from services.jwt_service import get_user_id_from_jwt
+from services.jwt_service import get_user_data_from_jwt
 from schemas.payment import CreatePaymentSchema, CreatedPaymentSchema, PaymentHistorySchema
+from schemas.user import UserSchema
+from core.exceptions import UserDoesntHaveRightsError
+
 
 router = APIRouter()
 
@@ -18,10 +21,10 @@ router = APIRouter()
              status_code=HTTPStatus.CREATED)
 async def subscribe(
         payment_data: CreatePaymentSchema,
-        user_id: UUID = Depends(get_user_id_from_jwt),
+        user_data: UserSchema = Depends(get_user_data_from_jwt),
         payment_service: YookassaService = Depends(get_yookassa_service)
 ) -> CreatedPaymentSchema:
-    return await payment_service.create_payment(user_id, payment_data.tariff_id)
+    return await payment_service.create_payment(user_data.user_id, payment_data.tariff_id)
 
 
 @router.post('/cancellation',
@@ -29,17 +32,14 @@ async def subscribe(
              status_code=HTTPStatus.OK)
 async def cancellation(
         user_id: UUID,
-        admin_id: UUID = Depends(get_user_id_from_jwt),
+        admin_data: UserSchema = Depends(get_user_data_from_jwt),
         payment_service: YookassaService = Depends(get_yookassa_service),
         return_fund: bool = False,
 ) -> Response:
-    # todo добавить в токен роль чтобы разграничивать поведение
-    # if not admin_id.get('is_admin'):
-    #     return HTTPStatus.FORBIDDEN
-    # else:
-    #     return await payment_service.unsubscribe(user_id, return_found)
-    await payment_service.unsubscribe(user_id, return_fund)
-    return Response(content='success')
+    if 'admin' in admin_data.roles:
+        await payment_service.unsubscribe(user_id, return_fund)
+        return Response(content='success')
+    raise UserDoesntHaveRightsError
 
 
 
@@ -47,11 +47,11 @@ async def cancellation(
              summary="Отписка",
              status_code=HTTPStatus.OK)
 async def unsubscribe(
-        user_id: UUID = Depends(get_user_id_from_jwt),
+        user_data: UserSchema = Depends(get_user_data_from_jwt),
         payment_service: YookassaService = Depends(get_yookassa_service),
 ) -> Response:
     return_fund = False
-    await payment_service.unsubscribe(user_id, return_fund)
+    await payment_service.unsubscribe(user_data.user_id, return_fund)
     return Response(content='success')
 
 
@@ -61,10 +61,10 @@ async def unsubscribe(
             response_model=list[PaymentSchema],
             status_code=HTTPStatus.OK)
 async def history(
-        user_id: UUID = Depends(get_user_id_from_jwt),
+        user_data: UUID = Depends(get_user_data_from_jwt),
         payment_service: YookassaService = Depends(get_yookassa_service),
 ) -> list[PaymentSchema]:
-    return await payment_service.get_all_payments(user_id)
+    return await payment_service.get_all_payments(user_data.user_id)
 
 
 @router.get('/subscriptions',
@@ -72,7 +72,7 @@ async def history(
             response_model=list[SubscriptionSchema],
             status_code=HTTPStatus.OK)
 async def history(
-        user_id: UUID = Depends(get_user_id_from_jwt),
+        user_data: UserSchema = Depends(get_user_data_from_jwt),
         payment_service: YookassaService = Depends(get_yookassa_service),
 ) -> list[SubscriptionSchema]:
-    return await payment_service.get_all_subscriptions(user_id)
+    return await payment_service.get_all_subscriptions(user_data.user_id)
