@@ -50,7 +50,7 @@ def is_valid_key(request: Request, key_name: str, key_value: str) -> bool:
 
 @router.put(
     '/subscribe/{user_id}',
-    status_code=HTTPStatus.NO_CONTENT
+    status_code=HTTPStatus.OK
 )
 @limiter.limit("20/minute")
 async def subscribe(
@@ -67,7 +67,7 @@ async def subscribe(
 
 @router.put(
     '/unsubscribe/{user_id}',
-    status_code=HTTPStatus.NO_CONTENT
+    status_code=HTTPStatus.OK
 )
 @limiter.limit("20/minute")
 async def unsubscribe(

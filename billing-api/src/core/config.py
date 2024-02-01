@@ -17,7 +17,7 @@ def get_auth_settings() -> AuthJWTSettings:
 
 class PostgresSettings(BaseSettings):
     host: str = "postgres"
-    port: int = 5433
+    port: int = 5432
     name: str = "billing_db"
     user: str = "admin"
     password: str = "123qwe"
@@ -41,7 +41,12 @@ class Setting(BaseSettings):
     webhook_api_url: str
     payment_redirect_url: str
 
-    AUTH_API_SUBSCRIBE_URL: str = "http://localhost/api/v1/users/subscribe"
-    AUTH_API_UNSUBSCRIBE_URL: str = "https://localhost/api/v1/users/unsubscribe"
+    AUTH_API_SUBSCRIBE_URL: str = "https://ba8b-141-136-91-48.ngrok-free.app/api/v1/users/subscribe"
+    AUTH_API_UNSUBSCRIBE_URL: str = "https://ba8b-141-136-91-48.ngrok-free.app/api/v1/users/unsubscribe"
+
+    header_key: str = "x-api-key"
+    header_value: str = "11111"
+
+    auto_pay_delay: int = 60
 
 settings = Setting()

@@ -15,6 +15,7 @@ from models.refund import RefundModel
 from models.tariff import TariffModel
 from schemas.tariff import PaymentSchema, SubscriptionSchema
 from schemas.payment import CreatedPaymentSchema
+from services.auth_service import auth_async_unsubscribe
 from tasks import subscribe
 
 
@@ -96,8 +97,8 @@ class YookassaService:
                 raise RefundError
 
         subscription.status = str(SubscriptionStatus.CANCELED)
-        self.session.add(subscription)
         await self.session.commit()
+        await auth_async_unsubscribe(user_id=user_id)
 
 
     async def save_refund(self, refund: RefundResponse) -> None:
