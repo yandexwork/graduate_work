@@ -41,5 +41,12 @@ class Setting(BaseSettings):
     webhook_api_url: str
     payment_redirect_url: str
 
+    AUTH_API_SUBSCRIBE_URL: str = "https://ba8b-141-136-91-48.ngrok-free.app/api/v1/users/subscribe"
+    AUTH_API_UNSUBSCRIBE_URL: str = "https://ba8b-141-136-91-48.ngrok-free.app/api/v1/users/unsubscribe"
+
+    header_key: str = "x-api-key"
+    header_value: str = "11111"
+
+    auto_pay_delay: int = 60
 
 settings = Setting()
