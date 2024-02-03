@@ -1,4 +1,5 @@
 # Проектная работа: диплом
+https://github.com/yandexwork/graduate_work
 
 Запуск проекта:
 - заполнить env файлы;
