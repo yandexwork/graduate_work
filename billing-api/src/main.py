@@ -18,7 +18,7 @@ async def lifespan(app: FastAPI):
     postgres.engine = create_async_engine(settings.dsn, future=True)
     auto_pay.delay()
     yield
-    postgres.engine = None
+    await postgres.engine.dispose()
 
 
 app = FastAPI(

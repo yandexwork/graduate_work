@@ -48,5 +48,7 @@ class Setting(BaseSettings):
     header_value: str = "11111"
 
     auto_pay_delay: int = 60
+    check_delay_in_seconds: int = 60
+
 
 settings = Setting()

@@ -24,10 +24,9 @@ def subscribe(payment_model_id, payment_id, payment_status):
         account_id=settings.yookassa_shopid,
         secret_key=settings.yookassa_token
     )
-    delay_in_seconds = 30
     tries = 1
     while True:
-        time.sleep(delay_in_seconds)
+        time.sleep(settings.check_delay_in_seconds)
         logging.info(f'Try #{tries}')
         new_payment_data = Payment.find_one(str(payment_id))
         if new_payment_data.status != payment_status:
@@ -76,7 +75,7 @@ def auto_pay():
         secret_key=settings.yookassa_token
     )
     while True:
-        print("Run checking subscriptions")
+        logging.info("Run checking subscriptions")
         session = get_sync_session()
         subscriptions = session.query(SubscriptionModel).filter(cast(SubscriptionModel.end_date, Date) == date.today(), SubscriptionModel.status == str(SubscriptionStatus.ACTIVE)).all()
         for subscription in subscriptions:

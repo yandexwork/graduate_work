@@ -4,6 +4,7 @@ pydantic_settings==2.0.2
 sqlalchemy==2.0.25
 orjson==3.9.12
 uvicorn==0.27.0.post1
+gunicorn==21.2.0
 sqlmodel==0.0.14
 asyncpg==0.29.0
 alembic==1.13.1

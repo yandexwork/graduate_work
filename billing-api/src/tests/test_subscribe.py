@@ -4,13 +4,14 @@ from uuid import uuid4
 import pytest
 
 
-@pytest.mark.asyncio
+pytestmark = pytest.mark.asyncio
+
+
 async def test_subscribe_unauthorized(billing_client):
     response = await billing_client.subscribe()
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
-@pytest.mark.asyncio
 async def test_subscribe(auth_client, billing_client):
     tariff_id = await billing_client.get_first_tariff_id()
     auth_headers = await auth_client.get_auth_headers()
@@ -20,7 +21,6 @@ async def test_subscribe(auth_client, billing_client):
     assert response.status_code == HTTPStatus.CREATED
 
 
-@pytest.mark.asyncio
 async def test_subscribe_invalid_tariff(auth_client, billing_client):
     invalid_tariff_id = str(uuid4())
     auth_headers = await auth_client.get_auth_headers()
