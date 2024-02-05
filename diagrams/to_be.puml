@@ -5,7 +5,6 @@
 !include SPRITES/kafka.puml
 !include SPRITES/postgresql.puml
 !include https://gist.githubusercontent.com/likeinlife/3f34e230e0240514fa28bcc1fce1c5b1/raw/457d818dda3ed5e89b491b53cc79fca67579b8a6/gistfile1.txt
-!include SPRITES/rabbitmq.puml
 
 skinparam linetype polyline
 skinparam linetype ortho
@@ -36,7 +35,7 @@ System_Boundary(payment_system, "Billing Service", $tags="to_be") {
     Container(payment_admin_panel, "Admin Panel", "Django")
     Container(payment_api, "Payment API", "Fast API")
     ContainerDb(payment_db, "Payment DB", "PostgreSQL", $sprite="postgresql")
-    ContainerDb(payment_queue, "Task queue", "RabbitMQ", $sprite="rabbitmq")
+    ContainerDb(payment_queue, "Task queue", "Celery")
 
 }
 
