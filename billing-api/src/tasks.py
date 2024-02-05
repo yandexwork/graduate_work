@@ -25,8 +25,9 @@ def subscribe(payment_model_id, payment_id, payment_status):
         secret_key=settings.yookassa_token
     )
     tries = 1
+    delay_in_seconds = settings.check_delay_in_seconds
     while True:
-        time.sleep(settings.check_delay_in_seconds)
+        time.sleep(delay_in_seconds)
         logging.info(f'Try #{tries}')
         new_payment_data = Payment.find_one(str(payment_id))
         if new_payment_data.status != payment_status:
