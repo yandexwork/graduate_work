@@ -10,14 +10,15 @@ from db import postgres
 from api.v1 import tariffs
 from api.v1 import subscription
 from api import healthcheck
-
+from tasks import auto_pay
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     postgres.engine = create_async_engine(settings.dsn, future=True)
+    auto_pay.delay()
     yield
-    postgres.engine = None
+    await postgres.engine.dispose()
 
 
 app = FastAPI(
@@ -35,7 +36,6 @@ async def project_error_handler(request: Request, exc: BaseErrorWithContent):
         status_code=exc.status_code,
         content=exc.content,
     )
-
 
 app.include_router(healthcheck.router, prefix="/billing-api/v1")
 app.include_router(tariffs.router, prefix="/billing-api/v1", tags=['tariffs'])

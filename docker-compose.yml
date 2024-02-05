@@ -11,8 +11,6 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
-    ports:
-      - 5432:5432
 
   admin_panel:
     container_name: admin-panel
@@ -34,7 +32,7 @@ services:
     container_name: billing-api
     command: >
       sh -c "alembic upgrade head &&
-             uvicorn --reload --host 0.0.0.0 --port 8001 main:app"
+             gunicorn main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8001"
     depends_on:
       - postgres
     env_file:

@@ -51,4 +51,4 @@ class Tariff(UUIDMixin, DatesMixin):
         verbose_name_plural = _('Tariffs')
 
     def __str__(self):
-        return f"{_('Tariff')} - {self.id}"
+        return f"{_('Tariff')} - {self.name}"

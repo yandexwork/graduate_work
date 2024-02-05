@@ -42,7 +42,6 @@ async def cancellation(
     raise UserDoesntHaveRightsError
 
 
-
 @router.post('/unsubscribe',
              summary="Отписка",
              status_code=HTTPStatus.OK)
@@ -52,6 +51,7 @@ async def unsubscribe(
 ) -> Response:
     return_fund = False
     await payment_service.unsubscribe(user_data.user_id, return_fund)
+    return Response(content='success')
 
 
 
