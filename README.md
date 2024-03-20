@@ -1,7 +1,9 @@
 # Платежный сервис
 
 Сервис по оплате услуг. Реализована оплата подписок с автоматическим продлением, а также возврат денежных средств. Добавить и настроить тарифы можно с помощью админ панели.
-Стек: Python, FastAPI, Django, Postgres, Alembic, sqlalchemy, yookassa, Celery, Redis, Docker, Nginx.
+Стек: Python, FastAPI, Django, Postgres, Alembic, sqlalchemy, yookassa, Celery, Redis, Docker, Nginx.  
+  
+[Документация OpenAPI](http://localhost:80/api/openapi)
 
 ## Развертывание приложения
 1. Заполнить .env файл
